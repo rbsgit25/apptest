@@ -10,38 +10,47 @@
 #     app.run()
 
 
+# app.py
 from flask import Flask, request, jsonify
-import pickle
-from flask_cors import CORS  # To allow requests from Angular
+from flask_cors import CORS  # Import CORS from flask_cors
+import joblib
+import numpy as np
 
-# Load trained model and vectorizer
-model = pickle.load(open("spam_model.pkl", "rb"))
-vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
-
-# Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
 
-@app.route("/predict", methods=["POST"])
+# Enable CORS for all routes in the app
+CORS(app)
+
+# Load the pre-trained model
+# model = joblib.load('linear_regression_model.pkl')
+
+model = joblib.load('salary_prediction_model.pkl')
+
+@app.route('/predict', methods=['POST'])
 def predict():
     try:
+        # Get the input data from the request
         data = request.get_json()
-        text = data.get("text", "")
-        if not text:
-            return jsonify({"error": "Text is required"}), 400
 
-        # Transform text and make prediction
-        vector = vectorizer.transform([text])
-        prediction = model.predict(vector)[0]
+        # Assuming the input is a number (e.g., X value for prediction)
+        X_input = np.array(data['X']).reshape(-1, 1)
 
-        return jsonify({"prediction": int(prediction)})
+        # Make the prediction
+        prediction = model.predict(X_input)
+
+        # Return the prediction as JSON
+        return jsonify({'prediction': prediction[0]})
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'error': str(e)})
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+
 
 # if __name__ == "__main__":
-#     app.run(debug=True)
-
-if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+#     import os
+#     port = int(os.environ.get("PORT", 5000))
+#     app.run(host="0.0.0.0", port=port)
